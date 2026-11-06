@@ -25,7 +25,8 @@ export async function handleTestDb(request: Request, env: Env): Promise<Response
     const supabase = createSupabaseClient(env);
     const { count, error } = await supabase
       .from('exams')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .abortSignal(AbortSignal.timeout(8000));
 
     const latencyMs = Date.now() - startTime;
 
