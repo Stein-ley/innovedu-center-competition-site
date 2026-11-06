@@ -1,0 +1,372 @@
+INNOVEDU CENTER COMPETITION STUDIO PROJECT CONFIGURATION, WORK HISTORY,
+AND TROUBLESHOOTING NOTES Prepared: 6 November 2026
+
+============================================================ 1. PROJECT
+OVERVIEW ============================================================
+
+Project name: Innovedu Center Competition Studio
+
+Purpose: A web-based competition and examination management platform.
+Organizers should be able to create and manage multiple independent
+exams. Participants enter using individual access codes and complete
+timed assessments.
+
+Target deployment: - Cloudflare Workers: application and API -
+Cloudflare D1: database - Cloudflare static assets: frontend files -
+Wrangler: command-line deployment from Windows - GitHub is intentionally
+not part of the preferred deployment workflow.
+
+Expected usage: - Desktop-first interface - Approximately 50–200
+participants - Competition deadline approaching
+
+IMPORTANT STATUS DISTINCTION: The capabilities below describe the
+requested/target system. They are not proof that every feature is
+implemented or working. The current deployment cannot be reached in the
+user’s browser, so end-to-end functionality has not been verified.
+
+============================================================ 2. COMPLETE
+TARGET SITE CONFIGURATION AND CAPABILITIES
+============================================================
+
+A. ORGANIZER / ADMIN ACCESS - Organizer login page. - Organizer
+credentials stored as Cloudflare Worker secrets: ADMIN_USERNAME
+ADMIN_PASSWORD SESSION_SECRET - Authenticated organizer dashboard. -
+Organizer controls separated from the participant interface.
+
+B. DASHBOARD AND EXAM MANAGEMENT - Dashboard listing all
+exams/competitions. - Create, edit, and delete exams. - Start/stop or
+independently host each exam. - Each exam has its own configuration and
+participant access. - Managing one exam should not unintentionally
+affect another. - Blank/default template available when creating an
+exam. - Organizer name/title, event/competition title, and exam title
+are separate fields.
+
+C. QUESTIONS AND EXAM CONTENT - Multiple-choice questions. -
+Written-answer questions. - Images attached to questions. - Edit exam
+and question content. - JSON import and export. - Blank template as the
+default starting point. - Automatic grading for multiple-choice
+questions. - Manual grading for written answers.
+
+D. PARTICIPANT ACCESS AND REGISTRATION - Separate participant-facing
+exam page. - Individual access code for each participant. - Collect
+participant information before the exam. - Display exam/competition
+rules before starting. - Access code grants access to the relevant
+exam. - Each access code can be used for one attempt only. - Prevent
+reuse of a code to take the same exam again.
+
+E. EXAM EXPERIENCE - Timed exam. - Participants answer questions and
+submit/finish. - Finish/confirmation page after submission. -
+Participant must not see their score immediately after finishing. -
+Participant interface is separate from the organizer dashboard.
+
+F. RESULTS AND GRADING - Automatic MCQ grading. - Manual written-answer
+grading by organizer. - Organizer can review submissions. - Organizer
+can view results. - Results can be exported. - Participant score is not
+displayed on the finish page.
+
+G. DATA AND INFRASTRUCTURE - Cloudflare D1 stores exam and
+participant-related data. - SQL migration initializes database tables. -
+Cloudflare Worker handles API/application requests. - Static frontend
+files are served from the public directory. - Frontend and API are
+intended to use the same Worker deployment.
+
+============================================================ 3. PROJECT
+FILES AND CONFIGURATION
+============================================================
+
+ZIP previously supplied:
+innovedu_center_competition_studio_v3_cloudflare_direct.zip
+
+User’s extraction folder:
+D:LOMBA+_center_competition_studio_v5_cloudflare_direct_center_competition_studio_v3
+
+Project structure inspected from the ZIP: - public/index.html -
+public/app.js - public/participant.html - public/styles.css -
+src/worker.js - migrations/0001_initial.sql - wrangler.jsonc -
+package.json - README - DEPLOY-WINDOWS.md
+
+Wrangler configuration observed in the ZIP:
+
+{ “$schema”: “node_modules/wrangler/config-schema.json”, “name”:
+“innovedu-center-competition-studio”, “main”: “src/worker.js”,
+“compatibility_date”: “2026-10-01”, “assets”: { “directory”: “./public”,
+“binding”: “ASSETS”, “run_worker_first”: [“/api/*”],
+“not_found_handling”: “single-page-application” }, “d1_databases”: [ {
+“binding”: “DB”, “database_name”: “innovedu-center-competition-db”,
+“database_id”: “REPLACE_WITH_YOUR_D1_DATABASE_ID”, “migrations_dir”:
+“migrations” } ] }
+
+IMPORTANT CONFIGURATION CHECK: The ZIP copy inspected by the assistant
+contained the placeholder database ID
+“REPLACE_WITH_YOUR_D1_DATABASE_ID”. The user was instructed to replace
+it. The deployment output showed a D1 binding by database name, but the
+actual database ID saved in the user’s local file was not independently
+verified. Check the local wrangler.jsonc before changing or redeploying.
+
+Observed frontend behavior: - public/index.html contains an app root
+element with id=“app”. - It initially displays “Loading…”. - It loads
+/app.js. - public/app.js calls GET /api/session during initialization. -
+It renders the login/home interface based on the session response. - If
+the API request fails, the frontend is expected to show an error and
+retry option.
+
+Observed Worker behavior: - src/worker.js handles API routes. - GET
+/api/health is intended to return: {“ok”: true, “service”: “Innovedu
+Center Competition Studio API”} - Non-API requests are passed to
+env.ASSETS.fetch(request). - Login uses the configured administrator
+secrets. - D1 is accessed through env.DB.
+
+Observed database migration: - migrations/0001_initial.sql - Tables
+observed: exams, questions, access_codes, attempts.
+
+============================================================ 4. WHAT THE
+USER HAS DONE
+============================================================
+
+1.  Selected Cloudflare as the hosting/deployment platform.
+2.  Chose direct deployment from Windows instead of GitHub.
+3.  Downloaded the supplied project ZIP.
+4.  Extracted it into the Windows folder listed above.
+5.  Attempted Wrangler authentication.
+6.  Initially encountered OAuth/browser timeout or authentication
+    difficulty.
+7.  Successfully authenticated Wrangler using the device-login flow.
+8.  Created a Cloudflare D1 database.
+9.  Edited Wrangler configuration to enter a D1 database ID. The exact
+    saved value still needs checking.
+10. Applied the D1 migration, according to the deployment workflow
+    followed.
+11. Set Worker secrets:
+    -   ADMIN_USERNAME
+    -   ADMIN_PASSWORD
+    -   SESSION_SECRET
+12. Ran: npx wrangler deploy
+13. Wrangler reported successful deployment.
+
+Deployment output reported: - Read 4 files from the public directory. -
+Uploaded index.html, app.js, participant.html, and styles.css. - Bound
+env.DB to innovedu-center-competition-db. - Bound env.ASSETS to static
+assets. - Uploaded/deployed innovedu-center-competition-studio. -
+Version ID: 9ddb9e2a-979f-4e60-ad88-af5d098b3b57
+
+Deployment URL printed by Wrangler:
+https://innovedu-center-competition-studio.info-innoveducenter.workers.dev
+
+14. Opened the deployed site in a browser.
+15. Reported that the website did not load.
+16. Was asked to test the homepage and API health endpoint.
+17. Clarified that BOTH are unreachable (case A):
+    -   Homepage cannot be reached.
+    -   /api/health cannot be reached.
+18. No successful browser test of login, dashboard, or participant exam
+    flow has been completed.
+
+API health URL:
+https://innovedu-center-competition-studio.info-innoveducenter.workers.dev/api/health
+
+Expected API health response if working: {“ok”: true, “service”:
+“Innovedu Center Competition Studio API”}
+
+============================================================ 5. WHAT MAY
+HAVE GONE WRONG / WHAT NEEDS CORRECTION
+============================================================
+
+These are possible issues to investigate, NOT confirmed user mistakes.
+
+A. A successful deployment does not prove the public website is
+reachable. Wrangler’s success message confirms that it uploaded/deployed
+the project. It does not prove the public workers.dev hostname is
+available or that the application works at runtime.
+
+B. Both homepage and API health endpoint are unreachable. This is the
+key current symptom. Since the API health URL is also unreachable,
+investigate the Worker hostname, workers.dev configuration,
+deployment/account association, or DNS/network access first. This is not
+yet evidence that the login code is the cause.
+
+C. The workers.dev hostname or route may not be enabled. In
+Cloudflare: - Open Workers & Pages. - Open
+innovedu-center-competition-studio. - Check Domains & Routes /
+Settings. - Confirm workers.dev is enabled. - Compare the displayed
+hostname exactly with the URL printed by Wrangler. - Confirm that an
+active deployment/version exists.
+
+D. Local D1 database ID must be verified. The original ZIP’s
+wrangler.jsonc contained a placeholder database ID. The user may have
+replaced it locally, but this has not been confirmed. Check that the
+local file contains the real D1 database ID, not the placeholder. Do not
+create a new database merely to test this.
+
+E. Secrets and migration status have not been independently verified.
+The user reports setting the secrets and applying the migration. This
+session has not independently confirmed the database migration state or
+secret configuration. Never ask the user to paste ADMIN_PASSWORD or
+SESSION_SECRET.
+
+F. JavaScript syntax checks are not full application tests. The
+assistant inspected the supplied ZIP and ran: - node –check
+public/app.js - node –check src/worker.js Both passed. This only checks
+JavaScript syntax. It does not prove that routing, database queries,
+login, sessions, or browser rendering work.
+
+G. Earlier verification was insufficient. The project was supplied and
+deployment was guided without first verifying a complete live deployment
+and the full organizer/participant workflow. The site should not have
+been described as ready merely because Wrangler reported success. This
+was a verification/process failure, not a confirmed user mistake.
+
+H. No confirmed user-caused mistake has been identified. The user
+followed the deployment process and Wrangler reported success. The root
+cause remains unknown. Do not assume the user edited files incorrectly
+or blame the user.
+
+============================================================ 6. CURRENT
+FEATURE / TEST STATUS
+============================================================
+
+Deployment command: - Wrangler reported success.
+
+Public homepage: - Not working from the user’s browser; reported
+unreachable.
+
+API /api/health: - Also reported unreachable.
+
+Organizer login: - Not verified.
+
+Organizer dashboard: - Not verified.
+
+Create/edit/delete exams: - Not verified.
+
+Question/image management: - Not verified.
+
+JSON import/export: - Not verified.
+
+Participant access-code flow: - Not verified.
+
+Participant information and rules: - Not verified.
+
+Timed exam: - Not verified.
+
+One-attempt-per-code restriction: - Not verified.
+
+Automatic MCQ grading: - Not verified.
+
+Manual written-answer grading: - Not verified.
+
+Results/export: - Not verified.
+
+Database persistence: - Not verified end-to-end.
+
+============================================================ 7. NEXT
+TROUBLESHOOTING STEPS
+============================================================
+
+Perform these in order. Avoid changing multiple things at once.
+
+STEP 1 — Inspect the Worker in Cloudflare - Visit
+https://dash.cloudflare.com/ - Open Workers & Pages. - Find
+innovedu-center-competition-studio. - Confirm the Worker exists. -
+Confirm an active deployment/version is shown. - Open Domains & Routes /
+Settings. - Confirm workers.dev is enabled. - Note the exact hostname
+shown. - Compare it character-for-character with the deployment URL.
+
+STEP 2 — Record the exact browser error When opening the site, note the
+exact Chrome error: - DNS_PROBE_FINISHED_NXDOMAIN -
+ERR_CONNECTION_REFUSED - ERR_CONNECTION_TIMED_OUT - A Cloudflare error
+page (record its exact code, e.g. 404, 522, 1101) - Generic “This site
+can’t be reached”
+
+The exact error helps distinguish DNS/hostname problems from Worker
+runtime problems.
+
+STEP 3 — Verify local Wrangler configuration From the extracted project
+folder, inspect wrangler.jsonc. Confirm: - name =
+innovedu-center-competition-studio - main = src/worker.js - assets
+directory = ./public - assets binding = ASSETS - /api/* requests run
+through the Worker - D1 binding = DB - database_name =
+innovedu-center-competition-db - database_id = the real D1 ID, not the
+placeholder
+
+Do not share passwords or secret values.
+
+STEP 4 — Check deployments and logs From Windows Command Prompt or
+PowerShell, in the project folder: - npx wrangler deployments list - npx
+wrangler tail
+
+Use the output to determine whether the Worker receives requests and
+whether runtime errors occur. Do not share secret values or tokens.
+
+STEP 5 — Retest both endpoints Homepage:
+https://innovedu-center-competition-studio.info-innoveducenter.workers.dev/
+
+API health:
+https://innovedu-center-competition-studio.info-innoveducenter.workers.dev/api/health
+
+Expected API response: {“ok”: true, “service”: “Innovedu Center
+Competition Studio API”}
+
+Only after both endpoints are reachable should login and the rest of the
+application be tested.
+
+STEP 6 — Test application functionality in stages 1. Organizer login. 2.
+Organizer dashboard. 3. Create a test exam. 4. Add MCQ and
+written-answer questions. 5. Edit and delete a test exam. 6. Export and
+re-import exam JSON. 7. Create a test participant access code. 8. Open
+the participant page in a private/incognito window. 9. Enter participant
+details and accept the rules. 10. Start, answer, and submit a timed
+test. 11. Confirm that the access code cannot be reused. 12. Confirm MCQ
+auto-grading. 13. Confirm written-answer manual grading. 14. Confirm
+results export. 15. Confirm the participant does not see their score on
+the finish page.
+
+============================================================ 8.
+DATA-PRESERVATION AND SECURITY NOTES
+============================================================
+
+-   Do not delete the D1 database while troubleshooting.
+-   Do not run destructive SQL commands.
+-   Do not create a replacement database unless there is a clear reason
+    and the existing database has been checked.
+-   Do not paste ADMIN_PASSWORD or SESSION_SECRET into chat.
+-   Do not assume the site works just because Wrangler reports a
+    successful deployment.
+-   Do not repeatedly redeploy before identifying the
+    hostname/configuration issue.
+-   Keep a backup copy of the extracted project folder before making
+    code changes.
+
+============================================================ 9. SHORT
+HANDOVER SUMMARY
+============================================================
+
+The user is building Innovedu Center Competition Studio, a desktop-first
+online competition/exam management website intended for approximately
+50–200 participants. The target architecture is Cloudflare Workers for
+the application/API, Cloudflare D1 for the database, and static assets
+in the public directory. Intended features include organizer login and
+dashboard, multiple independently managed exams, question/image
+management, JSON import/export, participant access codes and personal
+information, rules acceptance, timed attempts, one attempt per code,
+automatic MCQ grading, manual written-answer grading, result export, and
+no score shown to participants after submission.
+
+The user downloaded and extracted the supplied v3 Cloudflare
+direct-deployment ZIP, authenticated Wrangler using device login,
+created a D1 database, edited the Wrangler config, applied the
+migration, set three Worker secrets, and ran npx wrangler deploy.
+Wrangler reported successful deployment at:
+
+https://innovedu-center-competition-studio.info-innoveducenter.workers.dev
+
+However, both the homepage and /api/health are unreachable in the user’s
+browser. This is the current problem to investigate first. The exact
+cause is unknown. The original ZIP’s wrangler.jsonc contained a
+placeholder D1 database ID, so the local file must be checked, but it is
+NOT confirmed that the user failed to replace it. Basic JavaScript
+syntax checks passed, but no live end-to-end test has passed. No
+confirmed user-caused mistake has been identified.
+
+Next actions: inspect the Worker and workers.dev route in Cloudflare,
+record the exact browser error, verify the local D1 ID, inspect
+deployment list/logs, and only then proceed to application testing or
+code fixes.
